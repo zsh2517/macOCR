@@ -2,8 +2,7 @@
 
 macOCR is a command line app that runs OCR on text on your secreen.
 
-By default `ocr` prints the copied text to the terminal.
-You can also pass the `-c` flag to the `ocr` command to place the text on our clipboard. 
+Takes file, stdin, or screencapture as input.
 
 ![How it works](https://github.com/adam-zethraeus/macOCR/blob/main/screen-recording.gif?raw=true)
 
