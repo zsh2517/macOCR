@@ -1,5 +1,4 @@
 import ArgumentParser
-
 import Foundation
 import Cocoa
 import Combine
