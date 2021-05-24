@@ -14,16 +14,19 @@ You can also pass the `-c` flag to the `ocr` command to place the text on our cl
 > cd macOCR
 > swift build -c release
 > .build/release/ocr -h                                                                                      
-USAGE: ocr [--copy]
+USAGE: ocr [--capture] [--stdin] [-i <i>]
 
 OPTIONS:
-  -c, --copy              Copy OCR text to clipboard
+  -c, --capture           Capture screenshot. 
+  -s, --stdin             Read stdin binary data. 
+  -i <i>                  Path to input image. 
   -h, --help              Show help information.
-
 
 # You can place the binary in a folder in your $PATH
 > PATH=$PATH:~/bin
 > cp .build/release/ocr ~/bin
+> cat test.png | ocr
+Some text in your image
 ```
 
 When running the app the first time, you will be asked to allow the app access to your screen.
