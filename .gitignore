@@ -3,4 +3,5 @@
 .swiftpm
 *.xcodeproj/*
 notes.md
+.vscode
 

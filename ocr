@@ -1,8 +1,16 @@
 #!/bin/bash
 
-DIR="$( cd -P "$( dirname "$0" )" >/dev/null 2>&1 && pwd )"
+DIR="$( dirname $( realpath "$0" ) )"
+ 
+&>/dev/null pushd "$DIR"
 
-[[ -f "$DIR"/.build/release/ocr ]] || { pushd "$DIR" ; swift build -c release ; popd ; }
+function silentpop {
+  &>/dev/null popd
+}
 
-"$DIR"/.build/release/ocr "$@"
+trap silentpop EXIT
+
+[[ -f ".build/release/ocr" ]] || swift build -c release
+
+.build/release/ocr "$@"
 

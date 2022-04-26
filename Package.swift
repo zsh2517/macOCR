@@ -9,7 +9,8 @@ let package = Package(
     dependencies: [
         .package(name: "swift-argument-parser",
                  url: "https://github.com/apple/swift-argument-parser.git",
-                 .exact("0.3.1")),
+                 .upToNextMajor(from: .init(1, 1, 2))
+        ),
     ],
     targets: [
         .target(name: "ocr",
