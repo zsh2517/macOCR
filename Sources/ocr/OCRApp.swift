@@ -14,14 +14,18 @@ class OCRApp {
     func run() {
         let args = CLIArgs.ocr.parseOrExit()
         let image: CGImage?
-        switch (args.input, args.stdin, args.capture) {
-        case (.some(let path), false, false):
+        switch (args.input, args.stdin, args.capture, args.rectangle) {
+        case (.some(let path), false, false, .none):
             image = imageFromURL(path.pathAsURL)
-        case (.none, true, false):
+        case (.none, true, false, .none):
             image = imageFromStdIn()
-        case (.none, false, true):
+        case (.none, false, true, .some(let rect)):
             let tempURL = URL(fileURLWithPath: "/tmp/ocr-\(UUID().uuidString).png")
-            image = imageFromURL(captureRegion(destination: tempURL))
+            image = imageFromURL(captureRegion(destination: tempURL, rect: rect))
+            try? FileManager.default.removeItem(at: tempURL)
+        case (.none, false, true, .none):
+            let tempURL = URL(fileURLWithPath: "/tmp/ocr-\(UUID().uuidString).png")
+            image = imageFromURL(captureRegion(destination: tempURL, rect: nil))
             try? FileManager.default.removeItem(at: tempURL)
         default:
             CLIArgs.ocr.exit(withError: ArgumentParser.ValidationError("Input not properly specified."))
@@ -85,7 +89,6 @@ class OCRApp {
         var imageRect = CGRect(x: 0, y: 0, width: image.size.width, height: image.size.height)
         return image.cgImage(forProposedRect: &imageRect, context: nil, hints: nil)
     }
-
 
     func imageFromURL(_ inputURL: URL) -> CGImage? {
         if let ciImage = CIImage(contentsOf: inputURL),

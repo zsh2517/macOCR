@@ -13,10 +13,11 @@ Takes file, stdin, or screencapture as input.
 > cd macOCR
 > swift build -c release
 > .build/release/ocr -h                                                                                      
-USAGE: ocr [--capture] [--stdin] [-i <i>]
+USAGE: ocr [--capture] [-r <r>] [--stdin] [-i <i>]
 
 OPTIONS:
   -c, --capture           Capture screenshot. 
+  -r <r>                  Rectangle to unattendedly capture (-r x,y,w,h), needs --capture.
   -s, --stdin             Read stdin binary data. 
   -i <i>                  Path to input image. 
   -h, --help              Show help information.
