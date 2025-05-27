@@ -25,7 +25,7 @@ jobs:
         xcode-version: latest-stable
         
     - name: Cache Swift packages
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: .build
         key: ${{ runner.os }}-spm-${{ hashFiles('Package.resolved') }}
@@ -53,7 +53,7 @@ jobs:
         cd ..
         
     - name: Upload build artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: macOCR-${{ github.sha }}
         path: macOCR-${{ github.sha }}.tar.gz
@@ -74,7 +74,7 @@ jobs:
         xcode-version: latest-stable
         
     - name: Cache Swift packages
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: .build
         key: ${{ runner.os }}-spm-${{ hashFiles('Package.resolved') }}
