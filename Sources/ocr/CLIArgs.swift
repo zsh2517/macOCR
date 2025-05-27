@@ -21,10 +21,16 @@ struct CLIArgs {
 
         @Option(name: [.customShort("o"), .long], help: "Output format: text or json.")
         var output: String = "text"
+
+        @Option(name: [.customShort("m"), .long], help: "Recognition mode: fast or accurate.")
+        var mode: String = "fast"
         
         mutating func validate() throws {
             guard output == "text" || output == "json" else {
                 throw ValidationError("Output format must be 'text' or 'json'.")
+            }
+            guard mode == "fast" || mode == "accurate" else {
+                throw ValidationError("Mode must be 'fast' or 'accurate'.")
             }
         }
 

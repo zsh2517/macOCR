@@ -10,7 +10,14 @@ import var Darwin.stderr
 struct OCRResult: Codable {
     let id: String
     let text: String
-    let position: [Double] // [left, top, width, height]
+    let position: Position
+    
+    struct Position: Codable {
+        let left: Int
+        let top: Int
+        let width: Int
+        let height: Int
+    }
 }
 
 class OCRApp {
@@ -41,7 +48,7 @@ class OCRApp {
             fputs("Error: neither a valid image path as --input arg nor valid image data via stdin were found.", stderr)
             exit(EXIT_FAILURE)
         }
-        detectText(in: image, language: args.language, outputFormat: args.output)
+        detectText(in: image, language: args.language, outputFormat: args.output, mode: args.mode)
             .sink(receiveCompletion: {
                     switch $0 {
                     case .finished:
@@ -61,7 +68,7 @@ class OCRApp {
             .store(in: &cancellables)
     }
 
-    func detectText(in image: CGImage, language: String, outputFormat: String) -> AnyPublisher<String?, Error> {
+    func detectText(in image: CGImage, language: String, outputFormat: String, mode: String) -> AnyPublisher<String?, Error> {
         Deferred<Future<String?, Error>> {
             Future<String?, Error> { compl in
                 let requestHandler = VNImageRequestHandler(cgImage: image)
@@ -98,7 +105,12 @@ class OCRApp {
                             let result = OCRResult(
                                 id: String(index + 1),
                                 text: recognizedText.string,
-                                position: [left, top, width, height]
+                                position: OCRResult.Position(
+                                    left: Int(left.rounded()),
+                                    top: Int(top.rounded()),
+                                    width: Int(width.rounded()),
+                                    height: Int(height.rounded())
+                                )
                             )
                             results.append(result)
                         }
@@ -119,13 +131,36 @@ class OCRApp {
                     }
                 }
                 
-                // Set recognition languages if supported (macOS 11+)
-                if #available(macOS 11.0, *), language != "auto" {
-                    var recognitionLanguages = ["en-US"] // Default fallback
-                    recognitionLanguages.insert(language, at: 0)
-                    request.recognitionLanguages = recognitionLanguages
+                // 设置识别级别 (macOS 15.0+ 支持新 API，较旧版本使用兼容方法)
+                if #available(macOS 15.0, *) {
+                    // 使用新的 API
+                    if language == "auto" {
+                        request.automaticallyDetectsLanguage = true
+                    } else {
+                        request.automaticallyDetectsLanguage = false
+                        if #available(macOS 11.0, *) {
+                            var recognitionLanguages = ["en-US"]
+                            recognitionLanguages.insert(language, at: 0)
+                            request.recognitionLanguages = recognitionLanguages
+                        }
+                    }
+                    
+                    // 设置识别模式
+                    request.recognitionLevel = mode == "accurate" ? .accurate : .fast
+                } else {
+                    // 兼容较旧版本 (macOS 11-14)
+                    if #available(macOS 11.0, *), language != "auto" {
+                        var recognitionLanguages = ["en-US"]
+                        recognitionLanguages.insert(language, at: 0)
+                        request.recognitionLanguages = recognitionLanguages
+                    }
+                    // 对于旧版本，language == "auto" 时不设置 recognitionLanguages
+                    
+                    // 旧版本的识别级别设置
+                    if #available(macOS 11.0, *) {
+                        request.recognitionLevel = mode == "accurate" ? .accurate : .fast
+                    }
                 }
-                // 当 language 为 "auto" 时，不设置 recognitionLanguages，让系统自动检测
                 
                 try? requestHandler.perform([request])
             }

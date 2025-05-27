@@ -13,7 +13,7 @@ Takes file, stdin, or screencapture as input.
 > cd macOCR
 > swift build -c release
 > .build/release/ocr -h                                                                                      
-USAGE: ocr [--capture] [-r <r>] [--stdin] [-i <i>] [-l <language>] [-o <output>]
+USAGE: ocr [--capture] [-r <r>] [--stdin] [-i <i>] [-l <language>] [-o <output>] [-m <mode>]
 
 OPTIONS:
   -c, --capture           Capture screenshot. 
@@ -23,6 +23,7 @@ OPTIONS:
   -l, --language <language>
                           Recognition language (e.g., en-US, zh-CN, ja-JP, auto). Supports macOS 11+ only. (default: auto)
   -o, --output <output>   Output format: text or json. (default: text)
+  -m, --mode <mode>       Recognition mode: fast or accurate. (default: fast)
   -h, --help              Show help information.
 
 # You can place the binary in a folder in your $PATH
@@ -38,6 +39,10 @@ Some text in your image
 # Output as JSON with position information
 > ocr -c -o json         # Capture and output as JSON
 > ocr -i image.png -o json -l zh-CN # Chinese text with position data
+
+# Use different recognition modes
+> ocr -c -m fast         # Fast recognition (default)
+> ocr -c -m accurate     # More accurate but slower recognition
 ```
 
 When running the app the first time, you will be asked to allow the app access to your screen.
@@ -76,23 +81,47 @@ Returns a JSON array with text positioning information:
   {
     "id": "1",
     "text": "Hello World",
-    "position": [100.5, 200.3, 150.0, 25.0]
+    "position": {
+      "left": 100,
+      "top": 200,
+      "width": 150,
+      "height": 25
+    }
   },
   {
     "id": "2", 
     "text": "Another text block",
-    "position": [100.5, 230.3, 200.0, 25.0]
+    "position": {
+      "left": 100,
+      "top": 230,
+      "width": 200,
+      "height": 25
+    }
   }
 ]
 ```
 
-**Position Array Format**: `[left, top, width, height]`
-- `left`: X coordinate from the left edge of the image
-- `top`: Y coordinate from the top edge of the image  
-- `width`: Width of the text bounding box
-- `height`: Height of the text bounding box
+**Position Object Format**:
+- `left`: X coordinate from the left edge of the image (integer, pixels)
+- `top`: Y coordinate from the top edge of the image (integer, pixels)
+- `width`: Width of the text bounding box (integer, pixels)
+- `height`: Height of the text bounding box (integer, pixels)
 
-All position values are in pixels relative to the original image dimensions.
+All position values are rounded to the nearest integer and given in pixels relative to the original image dimensions.
+
+## Recognition Modes
+
+### Fast Mode (default)
+- Prioritizes speed over accuracy
+- Suitable for real-time applications
+- Lower computational requirements
+
+### Accurate Mode  
+- Prioritizes accuracy over speed
+- More computationally intensive
+- Better for high-quality text recognition
+
+**Note**: Recognition mode settings are available on macOS 11+ for basic functionality, with enhanced automatic language detection available on macOS 15+.
 
 ## OS Support
 
