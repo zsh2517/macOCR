@@ -16,5 +16,8 @@ struct CLIArgs {
         @Option(name: [.customShort("i")], help: "Path to input image.", completion: CompletionKind.file(extensions: ["gif", "png", "jpg", "webp", "tiff"]))
         var input: String?
 
+        @Option(name: [.customShort("l"), .long], help: "Recognition language (e.g., en-US, zh-CN, ja-JP). Supports macOS 11+ only.")
+        var language: String?
+
     }
 }

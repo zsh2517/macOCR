@@ -13,13 +13,15 @@ Takes file, stdin, or screencapture as input.
 > cd macOCR
 > swift build -c release
 > .build/release/ocr -h                                                                                      
-USAGE: ocr [--capture] [-r <r>] [--stdin] [-i <i>]
+USAGE: ocr [--capture] [-r <r>] [--stdin] [-i <i>] [-l <language>]
 
 OPTIONS:
   -c, --capture           Capture screenshot. 
   -r <r>                  Rectangle to unattendedly capture (-r x,y,w,h), needs --capture.
   -s, --stdin             Read stdin binary data. 
   -i <i>                  Path to input image. 
+  -l, --language <language>
+                          Recognition language (e.g., en-US, zh-CN, ja-JP). Supports macOS 11+ only.
   -h, --help              Show help information.
 
 # You can place the binary in a folder in your $PATH
@@ -27,11 +29,34 @@ OPTIONS:
 > cp .build/release/ocr ~/bin
 > cat test.png | ocr
 Some text in your image
+
+# Use with specific language (macOS 11+ only)
+> ocr -c -l zh-CN        # Capture and recognize Chinese text
+> ocr -i image.png -l ja-JP # Recognize Japanese text from image
 ```
 
 When running the app the first time, you will be asked to allow the app access to your screen.
 
 Enable it in: `System Preferences > Security & Privacy > Privacy > Screen Recording`. 
+
+## Language Support
+
+Starting from macOS 11 (Big Sur), you can specify the recognition language using the `-l` or `--language` option. Common language codes include:
+
+- `en-US` - English (United States) 
+- `zh-CN` - Chinese (Simplified)
+- `zh-TW` - Chinese (Traditional)
+- `ja-JP` - Japanese
+- `ko-KR` - Korean
+- `fr-FR` - French
+- `de-DE` - German
+- `es-ES` - Spanish
+- `it-IT` - Italian
+- `pt-BR` - Portuguese (Brazil)
+- `ru-RU` - Russian
+- `ar-SA` - Arabic
+
+**Note**: Language support is only available on macOS 11 or later. On older versions, the language parameter will be ignored.
 
 ## OS Support
 

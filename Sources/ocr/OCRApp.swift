@@ -35,7 +35,7 @@ class OCRApp {
             fputs("Error: neither a valid image path as --input arg nor valid image data via stdin were found.", stderr)
             exit(EXIT_FAILURE)
         }
-        detectText(in: image)
+        detectText(in: image, language: args.language)
             .sink(receiveCompletion: {
                     switch $0 {
                     case .finished:
@@ -55,7 +55,7 @@ class OCRApp {
             .store(in: &cancellables)
     }
 
-    func detectText(in image: CGImage) -> AnyPublisher<String?, Error> {
+    func detectText(in image: CGImage, language: String?) -> AnyPublisher<String?, Error> {
         Deferred<Future<String?, Error>> {
             Future<String?, Error> { compl in
                 let requestHandler = VNImageRequestHandler(cgImage: image)
@@ -76,6 +76,14 @@ class OCRApp {
                         }.joined(separator: " ")
                     })
                 }
+                
+                // Set recognition languages if supported (macOS 11+)
+                if #available(macOS 11.0, *), let language = language {
+                    var recognitionLanguages = ["en-US"] // Default fallback
+                    recognitionLanguages.insert(language, at: 0)
+                    request.recognitionLanguages = recognitionLanguages
+                }
+                
                 try? requestHandler.perform([request])
             }
         }.eraseToAnyPublisher()
