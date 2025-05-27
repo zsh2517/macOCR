@@ -7,6 +7,12 @@ import Vision
 import func Darwin.fputs
 import var Darwin.stderr
 
+struct OCRResult: Codable {
+    let id: String
+    let text: String
+    let position: [Double] // [left, top, width, height]
+}
+
 class OCRApp {
 
     var cancellables = Set<AnyCancellable>()
@@ -35,7 +41,7 @@ class OCRApp {
             fputs("Error: neither a valid image path as --input arg nor valid image data via stdin were found.", stderr)
             exit(EXIT_FAILURE)
         }
-        detectText(in: image, language: args.language)
+        detectText(in: image, language: args.language, outputFormat: args.output)
             .sink(receiveCompletion: {
                     switch $0 {
                     case .finished:
@@ -44,9 +50,9 @@ class OCRApp {
                         fputs(error.localizedDescription, stderr)
                         exit(EXIT_FAILURE)
                     }
-                }, receiveValue: {
-                    if let text = $0 {
-                        print(text)
+                }, receiveValue: { result in
+                    if let result = result {
+                        print(result)
                     } else {
                         fputs(OCRError.noTextFound.localizedDescription, stderr)
                         exit(EXIT_FAILURE)
@@ -55,7 +61,7 @@ class OCRApp {
             .store(in: &cancellables)
     }
 
-    func detectText(in image: CGImage, language: String?) -> AnyPublisher<String?, Error> {
+    func detectText(in image: CGImage, language: String, outputFormat: String) -> AnyPublisher<String?, Error> {
         Deferred<Future<String?, Error>> {
             Future<String?, Error> { compl in
                 let requestHandler = VNImageRequestHandler(cgImage: image)
@@ -70,19 +76,56 @@ class OCRApp {
                         return
                     }
 
-                    compl(Result {
-                        observations.compactMap {
+                    if outputFormat == "json" {
+                        // JSON 输出格式
+                        var results: [OCRResult] = []
+                        
+                        for (index, observation) in observations.enumerated() {
+                            guard let recognizedText = observation.topCandidates(1).first else { continue }
+                            
+                            // 获取整个文本的边界框
+                            let boundingBox = observation.boundingBox
+                            
+                            // 转换坐标系 (Vision 使用 (0,0) 在左下角，我们转换为左上角)
+                            let imageHeight = Double(image.height)
+                            let imageWidth = Double(image.width)
+                            
+                            let left = boundingBox.origin.x * imageWidth
+                            let top = (1.0 - boundingBox.origin.y - boundingBox.size.height) * imageHeight
+                            let width = boundingBox.size.width * imageWidth
+                            let height = boundingBox.size.height * imageHeight
+                            
+                            let result = OCRResult(
+                                id: String(index + 1),
+                                text: recognizedText.string,
+                                position: [left, top, width, height]
+                            )
+                            results.append(result)
+                        }
+                        
+                        do {
+                            let jsonData = try JSONEncoder().encode(results)
+                            let jsonString = String(data: jsonData, encoding: .utf8) ?? "[]"
+                            compl(.success(jsonString))
+                        } catch {
+                            compl(.failure(error))
+                        }
+                    } else {
+                        // 文本输出格式
+                        let text = observations.compactMap {
                             $0.topCandidates(1).first?.string
                         }.joined(separator: " ")
-                    })
+                        compl(.success(text))
+                    }
                 }
                 
                 // Set recognition languages if supported (macOS 11+)
-                if #available(macOS 11.0, *), let language = language {
+                if #available(macOS 11.0, *), language != "auto" {
                     var recognitionLanguages = ["en-US"] // Default fallback
                     recognitionLanguages.insert(language, at: 0)
                     request.recognitionLanguages = recognitionLanguages
                 }
+                // 当 language 为 "auto" 时，不设置 recognitionLanguages，让系统自动检测
                 
                 try? requestHandler.perform([request])
             }

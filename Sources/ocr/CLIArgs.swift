@@ -16,8 +16,17 @@ struct CLIArgs {
         @Option(name: [.customShort("i")], help: "Path to input image.", completion: CompletionKind.file(extensions: ["gif", "png", "jpg", "webp", "tiff"]))
         var input: String?
 
-        @Option(name: [.customShort("l"), .long], help: "Recognition language (e.g., en-US, zh-CN, ja-JP). Supports macOS 11+ only.")
-        var language: String?
+        @Option(name: [.customShort("l"), .long], help: "Recognition language (e.g., en-US, zh-CN, ja-JP, auto). Supports macOS 11+ only.")
+        var language: String = "auto"
+
+        @Option(name: [.customShort("o"), .long], help: "Output format: text or json.")
+        var output: String = "text"
+        
+        mutating func validate() throws {
+            guard output == "text" || output == "json" else {
+                throw ValidationError("Output format must be 'text' or 'json'.")
+            }
+        }
 
     }
 }
